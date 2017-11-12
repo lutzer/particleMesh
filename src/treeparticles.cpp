@@ -15,15 +15,19 @@ static const float PARTICLE_DISTANCE = 4.0;
 using namespace particle;
 
 void LineForce::updateParticle(Particle *particle) {
-    ofVec3f acc = shortestVectorToLine(particle->pos, line.start, line.end);
-    float dist = acc.length() - line.radius;
+    ofVec3f v = shortestVectorToLine(particle->pos, line.start, line.end);
+    float dist = v.length() - line.radius;
 
-    if (dist < 0) {
-        particle->vel *= -1.0;
-    } else {
-        acc *= dist;
-        particle->acc += acc;
-    }
+//    if (dist <= 0) {
+//        particle->vel *= 0;
+//    }
+
+    particle->acc += v * dist;
+}
+
+float LineForce::getDistance(const ofPoint &pos) {
+    ofVec3f v = shortestVectorToLine(pos, line.start, line.end);
+    return v.length() - line.radius;
 }
 
 void MeshParticle::addNeighbours(vector<Particle*> &particles) {
@@ -36,22 +40,37 @@ void MeshParticle::addNeighbour(Particle *particle) {
 }
 
 void MeshParticle::update() {
-    Particle::update();
+    //Particle::update();
+    this->acc = {0,0,0};
 
-    //calculate repeling/attraction forces between neighbour particles
-    for (auto neighbour : neighbours) {
-        float x = this->pos.distance(neighbour->pos) - PARTICLE_DISTANCE;
-
-        if (x < 0)
-            this->acc += (neighbour->pos - this->pos).getNormalized() * abs(x) * x;
-        else
-            this->acc += (neighbour->pos - this->pos).getNormalized() * x * 0.5;
-
-
-        //x = min(x, -PARTICLE_DISTANCE*2);
-
-        //this->acc += (neighbour->pos - this->pos).getNormalized() * x * 0.5;
+    float minDistance = FLT_MAX;
+    Force *closestForce = 0;
+    for (auto force : forces) {
+        float distance = force->getDistance(this->pos);
+        if ( distance < minDistance) {
+            minDistance = distance;
+            closestForce = force;
+        }
     }
+
+    // only apply the force to the particle which is the closest
+    if (closestForce != 0)
+        closestForce->updateParticle(this);
+
+//    //calculate repeling/attraction forces between neighbour particles
+//    for (auto neighbour : neighbours) {
+//        float x = this->pos.distance(neighbour->pos) - PARTICLE_DISTANCE;
+//
+//        if (x < 0)
+//            this->acc += (neighbour->pos - this->pos).getNormalized() * abs(x) * x;
+//        else
+//            this->acc += (neighbour->pos - this->pos).getNormalized() * x * 0.5;
+//
+//
+//        //x = min(x, -PARTICLE_DISTANCE*2);
+//
+//        //this->acc += (neighbour->pos - this->pos).getNormalized() * x * 0.5;
+//    }
 }
 
 void MeshParticle::draw() {

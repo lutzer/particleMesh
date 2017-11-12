@@ -23,6 +23,7 @@ namespace particle {
         LineForce(LineSegment line) : line(line) {};
 
         void updateParticle(Particle *particle) override;
+        float getDistance(const ofPoint &pos) override;
 
         LineSegment line;
     };

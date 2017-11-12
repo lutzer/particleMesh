@@ -51,6 +51,9 @@ namespace particle {
         virtual void updateParticle(Particle *particle) {
             // change particle
         }
+        virtual float getDistance(const ofPoint &pos) {
+            return 0.0;
+        }
     };
 
     class ParticleSystem {
